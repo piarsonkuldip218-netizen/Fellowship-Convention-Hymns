@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Church Hymnal</title>
+<meta name="theme-color" content="#080818"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Segoe UI',sans-serif;background:#080818;color:#fff;height:100vh;overflow:hidden;max-width:480px;margin:0 auto;}
+.app{display:flex;flex-direction:column;height:100vh;}
+.topbar{display:flex;background:#04040f;padding:9px 12px;gap:8px;border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.topbar button{flex:1;padding:10px;border-radius:12px;border:none;cursor:pointer;font-weight:700;font-size:13px;transition:all 0.2s;}
+.topbar button.active{background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;box-shadow:0 4px 16px rgba(99,102,241,0.5);}
+.topbar button.inactive{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.07);}
+.panel{flex:1;overflow:hidden;position:relative;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;}
+.hidden{display:none!important;}
+
+/* BG Orbs */
+.bg{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.orb{position:absolute;border-radius:50%;}
+.content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%;}
+
+/* Glass */
+.glass{background:rgba(255,255,255,0.08);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.15);}
+.glass-card{background:rgba(255,255,255,0.09);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.18);box-shadow:0 8px 32px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.15);}
+
+/* Header */
+.header{padding:16px 16px 12px;border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.header-icon{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#6366F1,#3B82F6);display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 18px rgba(99,102,241,0.55);flex-shrink:0;}
+.header-title{font-size:18px;font-weight:800;letter-spacing:0.3px;}
+.header-sub{color:rgba(255,255,255,0.4);font-size:12px;margin-top:2px;}
+.search-box{display:flex;align-items:center;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:14px;padding:10px 14px;margin-bottom:10px;gap:8px;}
+.search-box input{flex:1;border:none;background:transparent;outline:none;font-size:14px;color:#fff;font-family:inherit;}
+.search-box input::placeholder{color:rgba(255,255,255,0.35);}
+.cats{display:flex;overflow-x:auto;gap:7px;padding-bottom:2px;scrollbar-width:none;}
+.cats::-webkit-scrollbar{display:none;}
+.cat-btn{flex-shrink:0;padding:5px 13px;border-radius:20px;border:none;cursor:pointer;font-size:12px;font-weight:700;transition:all 0.2s;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.5);}
+.cat-btn.active{color:#fff;}
+
+/* Song List */
+.list{flex:1;overflow-y:auto;padding:4px 12px 16px;}
+.count{padding:7px 15px 2px;font-size:12px;color:rgba(255,255,255,0.3);flex-shrink:0;}
+.song-row{background:rgba(255,255,255,0.09);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.18);border-radius:16px;padding:13px 15px;margin-bottom:9px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform 0.15s;}
+.song-row:active{transform:scale(0.98);}
+.song-num{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;}
+.song-info{flex:1;min-width:0;}
+.song-title{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;}
+.song-cat{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700;}
+.song-fav{background:none;border:none;cursor:pointer;font-size:20px;padding:4px;flex-shrink:0;}
+.song-arr{color:rgba(255,255,255,0.2);font-size:18px;flex-shrink:0;}
+.empty{text-align:center;padding:60px 20px;color:rgba(255,255,255,0.25);}
+.empty-icon{font-size:40px;margin-bottom:10px;}
+
+/* Song View */
+.song-header{padding:13px 15px;flex-shrink:0;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.1);}
+.song-header-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.back-btn{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:16px;color:rgba(255,255,255,0.75);flex-shrink:0;}
+.badges{display:flex;align-items:center;gap:7px;margin-bottom:6px;flex-wrap:wrap;}
+.badge-num{color:#fff;font-weight:800;font-size:12px;padding:3px 10px;border-radius:8px;}
+.badge-cat{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700;}
+.song-view-title{font-size:15px;font-weight:700;color:#fff;line-height:1.4;}
+.font-controls{display:flex;align-items:center;gap:8px;}
+.font-btn{padding:5px 11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:9px;cursor:pointer;font-size:12px;font-weight:700;color:rgba(255,255,255,0.75);}
+.font-size-label{font-size:11px;color:rgba(255,255,255,0.3);margin-left:4px;}
+.lyrics-wrap{flex:1;overflow-y:auto;padding:18px 16px 40px;}
+.lyrics-card{background:rgba(255,255,255,0.09);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:22px 18px;}
+.lyrics-text{margin:0;font-family:'Segoe UI',sans-serif;line-height:2;color:rgba(255,255,255,0.92);white-space:pre-wrap;word-break:break-word;}
+.nav-btns{display:flex;gap:10px;margin-top:14px;}
+.nav-btn{flex:1;padding:11px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;}
+
+/* Admin */
+.admin-header{padding:14px 18px;background:rgba(255,255,255,0.05);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.1);flex-shrink:0;}
+.admin-header-inner{display:flex;align-items:center;justify-content:space-between;}
+.admin-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:18px;}
+.logout-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:10px;padding:7px 13px;color:rgba(255,255,255,0.6);font-size:12px;font-weight:600;cursor:pointer;}
+.tabs{display:flex;padding:10px 14px 6px;gap:8px;flex-shrink:0;}
+.tab-btn{flex:1;padding:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;border-radius:12px;transition:all 0.2s;}
+.tab-btn.active{background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;}
+.tab-btn.inactive{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.1);}
+.flash{margin:0 14px 6px;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;color:#fff;}
+.flash.success{background:rgba(16,185,129,0.3);border:1px solid rgba(16,185,129,0.4);}
+.flash.error{background:rgba(239,68,68,0.3);border:1px solid rgba(239,68,68,0.4);}
+.admin-list{flex:1;overflow-y:auto;padding:4px 14px 20px;}
+.admin-row{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:16px;padding:13px 15px;margin-bottom:9px;display:flex;align-items:center;gap:11px;}
+.admin-row-info{flex:1;min-width:0;}
+.admin-row-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.edit-btn{padding:6px 11px;background:rgba(99,102,241,0.2);color:#A5B4FC;border:1px solid rgba(99,102,241,0.35);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;}
+.del-btn{padding:6px 11px;background:rgba(239,68,68,0.18);color:#FCA5A5;border:1px solid rgba(239,68,68,0.35);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;}
+.form-wrap{flex:1;overflow-y:auto;padding:4px 14px 20px;}
+.form-card{background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.18);border-radius:18px;padding:20px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.55);display:block;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;}
+.form-input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);font-size:14px;outline:none;background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;}
+.form-input::placeholder{color:rgba(255,255,255,0.35);}
+.form-input option{background:#1a1a4e;color:#fff;}
+textarea.form-input{resize:vertical;line-height:1.8;}
+.char-count{font-size:11px;color:rgba(255,255,255,0.3);margin-top:5px;}
+.submit-btn{flex:1;padding:13px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 18px rgba(99,102,241,0.5);}
+.cancel-btn{padding:13px 16px;background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.18);border-radius:14px;font-size:13px;font-weight:600;cursor:pointer;}
+.btn-row{display:flex;gap:10px;}
+
+/* Login */
+.login-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:24px;background:linear-gradient(145deg,#0F0C29,#1a1a4e,#24243e);}
+.login-card{background:rgba(255,255,255,0.09);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.18);border-radius:24px;padding:36px 28px;text-align:center;width:100%;max-width:340px;}
+.login-icon{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 20px;}
+.login-title{font-size:20px;font-weight:800;margin-bottom:6px;}
+.login-sub{color:rgba(255,255,255,0.45);font-size:13px;margin-bottom:28px;}
+.pw-wrap{position:relative;margin-bottom:16px;}
+.pw-wrap input{padding-right:44px;}
+.pw-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(255,255,255,0.4);font-size:16px;}
+.err-msg{color:#FCA5A5;font-size:13px;margin-bottom:12px;font-weight:600;}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,#6366F1,#8B5CF6);color:#fff;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:300;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(10px);}
+.modal-card{background:rgba(255,255,255,0.09);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.18);border-radius:22px;padding:30px 24px;max-width:300px;width:100%;text-align:center;}
+.modal-icon{font-size:42px;margin-bottom:12px;}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:8px;}
+.modal-sub{font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:24px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <button class="active" id="btn-user" onclick="switchPanel('user')">🎵 Hymnal</button>
+    <button class="inactive" id="btn-admin" onclick="switchPanel('admin')">⚙️ Admin</button>
+  </div>
+  <div class="panel">
+    <!-- USER VIEW -->
+    <div class="screen" id="screen-list">
+      <div class="bg">
+        <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,#6366F150,transparent 70%);top:-100px;left:-80px;"></div>
+        <div class="orb" style="width:280px;height:280px;background:radial-gradient(circle,#8B5CF640,transparent 70%);top:35%;right:-70px;"></div>
+        <div class="orb" style="width:260px;height:260px;background:radial-gradient(circle,#3B82F635,transparent 70%);bottom:-70px;left:25%;"></div>
+      </div>
+      <div class="content">
+        <div class="header">
+          <div class="header-top">
+            <div class="header-icon">✝</div>
+            <div>
+              <div class="header-title">Church Hymnal</div>
+              <div class="header-sub" id="hymn-count-label">0 songs · 0 favourites</div>
+            </div>
+          </div>
+          <div class="search-box">
+            <span style="font-size:15px;color:rgba(255,255,255,0.35)">🔍</span>
+            <input type="text" id="search-input" placeholder="Number, title ya category..." oninput="renderList()"/>
+            <button onclick="clearSearch()" style="background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;display:none;" id="clear-btn">✕</button>
+          </div>
+          <div class="cats" id="cat-filter"></div>
+        </div>
+        <div class="count" id="result-count"></div>
+        <div class="list" id="hymn-list"></div>
+      </div>
+    </div>
+
+    <!-- SONG VIEW -->
+    <div class="screen hidden" id="screen-song">
+      <div class="bg" id="song-bg"></div>
+      <div class="content">
+        <div class="song-header">
+          <div class="song-header-top">
+            <button class="back-btn" onclick="goBack()">←</button>
+            <div style="flex:1">
+              <div class="badges">
+                <span class="badge-num" id="song-num-badge"></span>
+                <span class="badge-cat" id="song-cat-badge"></span>
+              </div>
+              <div class="song-view-title" id="song-view-title"></div>
+            </div>
+            <button class="song-fav" id="song-fav-btn" onclick="toggleFavCurrent()"></button>
+          </div>
+          <div class="font-controls">
+            <span style="font-size:11px;color:rgba(255,255,255,0.4)">Font:</span>
+            <button class="font-btn" onclick="changeFont(-2)">A−</button>
+            <button class="font-btn" onclick="changeFont(2)">A+</button>
+            <button class="font-btn" onclick="resetFont()">Reset</button>
+            <span class="font-size-label" id="font-label">16px</span>
+          </div>
+        </div>
+        <div class="lyrics-wrap">
+          <div class="lyrics-card">
+            <pre class="lyrics-text" id="lyrics-text"></pre>
+          </div>
+          <div class="nav-btns" id="nav-btns"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN LOGIN -->
+    <div class="screen hidden" id="screen-login">
+      <div class="login-wrap">
+        <div class="login-card">
+          <div class="login-icon">🔐</div>
+          <div class="login-title">Admin Access</div>
+          <div class="login-sub">Password daalo admin panel ke liye</div>
+          <div class="pw-wrap">
+            <input class="form-input" type="password" id="pw-input" placeholder="Password..." onkeydown="if(event.key==='Enter')doLogin()"/>
+            <button class="pw-toggle" onclick="togglePw()">👁️</button>
+          </div>
+          <div class="err-msg hidden" id="login-err">❌ Galat password!</div>
+          <button class="login-btn" onclick="doLogin()">Login →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN PANEL -->
+    <div class="screen hidden" id="screen-admin">
+      <div class="bg">
+        <div class="orb" style="width:350px;height:350px;background:radial-gradient(circle,#6366F150,transparent 70%);top:-100px;left:-80px;"></div>
+        <div class="orb" style="width:280px;height:280px;background:radial-gradient(circle,#8B5CF640,transparent 70%);top:35%;right:-70px;"></div>
+      </div>
+      <div class="content">
+        <div class="admin-header">
+          <div class="admin-header-inner">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="admin-icon">⚙️</div>
+              <div>
+                <div style="font-size:16px;font-weight:800">Admin Panel</div>
+                <div style="color:rgba(255,255,255,0.45);font-size:11px" id="admin-count"></div>
+              </div>
+            </div>
+            <button class="logout-btn" onclick="doLogout()">Logout</button>
+          </div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-list-btn" onclick="switchTab('list')">📋 Songs</button>
+          <button class="tab-btn inactive" id="tab-add-btn" onclick="switchTab('add')">➕ Add</button>
+        </div>
+        <div class="flash hidden" id="flash-msg"></div>
+        <!-- Admin List -->
+        <div id="admin-list-panel" style="flex:1;overflow-y:auto;padding:4px 14px 20px;">
+          <div style="position:relative;margin-bottom:12px">
+            <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:rgba(255,255,255,0.35)">🔍</span>
+            <input class="form-input" style="padding-left:38px" type="text" id="admin-search" placeholder="Search songs..." oninput="renderAdminList()"/>
+          </div>
+          <div id="admin-rows"></div>
+        </div>
+        <!-- Add/Edit Form -->
+        <div id="admin-form-panel" class="hidden" style="flex:1;overflow-y:auto;padding:4px 14px 20px;">
+          <div class="form-card">
+            <div class="form-group">
+              <label class="form-label">Hymn Number *</label>
+              <input class="form-input" type="number" id="f-number" placeholder="e.g. 301" min="1" max="9999"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Category *</label>
+              <select class="form-input" id="f-category"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Song Title *</label>
+              <input class="form-input" type="text" id="f-title" placeholder="e.g. YISHU jaldi aanewaalaa hai"/>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Full Lyrics * <span style="font-weight:400;text-transform:none;letter-spacing:0;color:rgba(255,255,255,0.3)">(bilkul book jaisa)</span></label>
+              <textarea class="form-input" id="f-lyrics" rows="13" placeholder="Ch:- ...&#10;&#10;1. ...&#10;&#10;2. ..." oninput="updateCharCount()"></textarea>
+              <div class="char-count" id="char-count">0 characters</div>
+            </div>
+            <div class="btn-row">
+              <button class="submit-btn" id="submit-btn" onclick="submitForm()">➕ Add Song</button>
+              <button class="cancel-btn hidden" id="cancel-btn" onclick="cancelEdit()">✕ Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay hidden" id="del-modal">
+  <div class="modal-card">
+    <div class="modal-icon">🗑️</div>
+    <div class="modal-title">Delete karein?</div>
+    <div class="modal-sub">Yeh action undo nahi ho sakta.</div>
+    <div class="btn-row">
+      <button class="cancel-btn" style="flex:1" onclick="closeDelModal()">Cancel</button>
+      <button style="flex:1;padding:12px;background:linear-gradient(135deg,#EF4444,#F97316);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PASS = "somethingspecial";
+const CATS = ["Second Coming","Resurrection","Holy Spirit","Children's Song","Praise","Worship","Prayer","Dedication","Christian Life","Crucifixion","Birth of Jesus","Congregational","Easter","Trust","Invitation","Christmas","Other"];
+const CAT_GRAD = {
+  "Second Coming":["#6366F1","#8B5CF6"],"Resurrection":["#EF4444","#F97316"],
+  "Holy Spirit":["#F97316","#EAB308"],"Children's Song":["#3B82F6","#06B6D4"],
+  "Praise":["#10B981","#6366F1"],"Worship":["#8B5CF6","#EC4899"],
+  "Prayer":["#06B6D4","#3B82F6"],"Dedication":["#EC4899","#F43F5E"],
+  "Christian Life":["#84CC16","#10B981"],"Crucifixion":["#EF4444","#DC2626"],
+  "Birth of Jesus":["#F59E0B","#EF4444"],"Congregational":["#10B981","#06B6D4"],
+  "Easter":["#F43F5E","#F97316"],"Trust":["#EAB308","#F97316"],
+  "Invitation":["#10B981","#06B6D4"],"Christmas":["#EF4444","#10B981"],"Other":["#6B7280","#9CA3AF
